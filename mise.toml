@@ -1,0 +1,5 @@
+[tools]
+go = "1.26.1"
+
+[tools."golangci-lint"]
+version = "2.11.1"

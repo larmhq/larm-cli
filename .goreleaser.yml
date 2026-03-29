@@ -1,0 +1,56 @@
+version: 2
+
+project_name: larm
+
+builds:
+  - main: .
+    binary: larm
+    ldflags:
+      - -s -w
+      - -X github.com/larmhq/larm-cli/cmd.version={{.Version}}
+      - -X github.com/larmhq/larm-cli/cmd.commit={{.ShortCommit}}
+      - -X github.com/larmhq/larm-cli/cmd.date={{.Date}}
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ignore:
+      - goos: windows
+        goarch: arm64
+
+archives:
+  - formats:
+      - tar.gz
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    format_overrides:
+      - goos: windows
+        formats:
+          - zip
+
+checksum:
+  name_template: checksums.txt
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^ci:"
+
+homebrew_casks:
+  - name: larm
+    binaries:
+      - larm
+    repository:
+      owner: larmhq
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    homepage: https://larm.dev
+    description: Larm CLI -- uptime monitoring from the command line
+    license: MIT

@@ -1,0 +1,1517 @@
+openapi: "3.1.0"
+info:
+  title: Larm API
+  version: "1.0"
+  description: |
+    The Larm REST API lets you manage monitors, alert channels, status pages,
+    incidents, and webhook subscriptions programmatically.
+
+    All endpoints require a Bearer API key. Create one in Settings > API Keys.
+  contact:
+    email: hi@larm.dev
+    url: https://docs.larm.dev
+
+servers:
+  - url: https://app.larm.dev/api/v1
+    description: Production
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Monitors
+    description: Manage uptime monitors
+  - name: Monitor Stats
+    description: Monitor state, uptime, response times, and SSL certificate info
+  - name: Alert Channels
+    description: Manage alert notification channels
+  - name: Status Pages
+    description: Manage public status pages
+  - name: Components
+    description: Manage status page components
+  - name: Incidents
+    description: Manage incidents and maintenance windows
+  - name: Webhooks
+    description: Manage webhook subscriptions
+
+paths:
+  # ── Monitors ──────────────────────────────────────────────────────────
+  /monitors:
+    get:
+      operationId: listMonitors
+      tags: [Monitors]
+      summary: List monitors
+      parameters:
+        - name: check_type
+          in: query
+          schema:
+            $ref: "#/components/schemas/CheckType"
+        - name: enabled
+          in: query
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: List of monitors
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Monitor"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+    post:
+      operationId: createMonitor
+      tags: [Monitors]
+      summary: Create a monitor
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MonitorInput"
+      responses:
+        "201":
+          description: Monitor created
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Monitor"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+
+  /monitors/{id}:
+    get:
+      operationId: getMonitor
+      tags: [Monitors]
+      summary: Get a monitor
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Monitor details (includes alert_channel_ids)
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Monitor"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    patch:
+      operationId: updateMonitor
+      tags: [Monitors]
+      summary: Update a monitor
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MonitorInput"
+      responses:
+        "200":
+          description: Monitor updated
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Monitor"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+
+    delete:
+      operationId: deleteMonitor
+      tags: [Monitors]
+      summary: Delete a monitor
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "204":
+          description: Monitor deleted
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # ── Monitor Stats ─────────────────────────────────────────────────────
+  /monitors/{monitor_id}/state:
+    get:
+      operationId: getMonitorState
+      tags: [Monitor Stats]
+      summary: Get current monitor state
+      parameters:
+        - $ref: "#/components/parameters/MonitorId"
+      responses:
+        "200":
+          description: Current state
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: "#/components/schemas/MonitorState"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /monitors/{monitor_id}/uptime:
+    get:
+      operationId: getMonitorUptime
+      tags: [Monitor Stats]
+      summary: Get monitor uptime
+      parameters:
+        - $ref: "#/components/parameters/MonitorId"
+        - name: range
+          in: query
+          description: Time range (e.g. 24h, 7d, 30d)
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Uptime percentage and status distribution
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: "#/components/schemas/MonitorUptime"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /monitors/{monitor_id}/response-times:
+    get:
+      operationId: getMonitorResponseTimes
+      tags: [Monitor Stats]
+      summary: Get monitor response times
+      parameters:
+        - $ref: "#/components/parameters/MonitorId"
+      responses:
+        "200":
+          description: P95 latency and per-location breakdown
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: "#/components/schemas/MonitorResponseTimes"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /monitors/{monitor_id}/cert:
+    get:
+      operationId: getMonitorCert
+      tags: [Monitor Stats]
+      summary: Get SSL certificate info
+      parameters:
+        - $ref: "#/components/parameters/MonitorId"
+      responses:
+        "200":
+          description: SSL certificate details
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: "#/components/schemas/MonitorCert"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # ── Alert Channels ────────────────────────────────────────────────────
+  /alert-channels:
+    get:
+      operationId: listAlertChannels
+      tags: [Alert Channels]
+      summary: List alert channels
+      responses:
+        "200":
+          description: List of alert channels
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AlertChannel"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+    post:
+      operationId: createAlertChannel
+      tags: [Alert Channels]
+      summary: Create an alert channel
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AlertChannelInput"
+      responses:
+        "201":
+          description: Alert channel created
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: "#/components/schemas/AlertChannel"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+
+  /alert-channels/{id}:
+    get:
+      operationId: getAlertChannel
+      tags: [Alert Channels]
+      summary: Get an alert channel
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Alert channel details
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: "#/components/schemas/AlertChannel"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    patch:
+      operationId: updateAlertChannel
+      tags: [Alert Channels]
+      summary: Update an alert channel
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AlertChannelInput"
+      responses:
+        "200":
+          description: Alert channel updated
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: "#/components/schemas/AlertChannel"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+
+    delete:
+      operationId: deleteAlertChannel
+      tags: [Alert Channels]
+      summary: Delete an alert channel
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "204":
+          description: Alert channel deleted
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # ── Status Pages ──────────────────────────────────────────────────────
+  /status-pages:
+    get:
+      operationId: listStatusPages
+      tags: [Status Pages]
+      summary: List status pages
+      responses:
+        "200":
+          description: List of status pages
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/StatusPage"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+    post:
+      operationId: createStatusPage
+      tags: [Status Pages]
+      summary: Create a status page
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StatusPageInput"
+      responses:
+        "201":
+          description: Status page created
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: "#/components/schemas/StatusPage"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+
+  /status-pages/{id}:
+    get:
+      operationId: getStatusPage
+      tags: [Status Pages]
+      summary: Get a status page
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Status page details with components
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: "#/components/schemas/StatusPage"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    patch:
+      operationId: updateStatusPage
+      tags: [Status Pages]
+      summary: Update a status page
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StatusPageInput"
+      responses:
+        "200":
+          description: Status page updated
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: "#/components/schemas/StatusPage"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+
+    delete:
+      operationId: deleteStatusPage
+      tags: [Status Pages]
+      summary: Delete a status page
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "204":
+          description: Status page deleted
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # ── Components ────────────────────────────────────────────────────────
+  /status-pages/{status_page_id}/components:
+    get:
+      operationId: listComponents
+      tags: [Components]
+      summary: List components for a status page
+      parameters:
+        - $ref: "#/components/parameters/StatusPageId"
+      responses:
+        "200":
+          description: List of components
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Component"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    post:
+      operationId: createComponent
+      tags: [Components]
+      summary: Create a component
+      parameters:
+        - $ref: "#/components/parameters/StatusPageId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ComponentInput"
+      responses:
+        "201":
+          description: Component created
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Component"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+
+  /status-pages/{status_page_id}/components/{id}:
+    get:
+      operationId: getComponent
+      tags: [Components]
+      summary: Get a component
+      parameters:
+        - $ref: "#/components/parameters/StatusPageId"
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Component details with monitors
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Component"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    patch:
+      operationId: updateComponent
+      tags: [Components]
+      summary: Update a component
+      parameters:
+        - $ref: "#/components/parameters/StatusPageId"
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ComponentInput"
+      responses:
+        "200":
+          description: Component updated
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Component"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+
+    delete:
+      operationId: deleteComponent
+      tags: [Components]
+      summary: Delete a component
+      parameters:
+        - $ref: "#/components/parameters/StatusPageId"
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "204":
+          description: Component deleted
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # ── Incidents ─────────────────────────────────────────────────────────
+  /incidents:
+    get:
+      operationId: listIncidents
+      tags: [Incidents]
+      summary: List incidents
+      responses:
+        "200":
+          description: List of incidents
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/IncidentSummary"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+    post:
+      operationId: createIncident
+      tags: [Incidents]
+      summary: Create an incident
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IncidentInput"
+      responses:
+        "201":
+          description: Incident created
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: "#/components/schemas/IncidentDetail"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+
+  /incidents/{id}:
+    get:
+      operationId: getIncident
+      tags: [Incidents]
+      summary: Get an incident
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Incident details with updates and affected components
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: "#/components/schemas/IncidentDetail"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    patch:
+      operationId: updateIncident
+      tags: [Incidents]
+      summary: Update an incident
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IncidentInput"
+      responses:
+        "200":
+          description: Incident updated
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: "#/components/schemas/IncidentDetail"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+
+  # ── Webhooks ──────────────────────────────────────────────────────────
+  /webhooks:
+    get:
+      operationId: listWebhooks
+      tags: [Webhooks]
+      summary: List webhook subscriptions
+      responses:
+        "200":
+          description: List of webhook subscriptions
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/WebhookSubscription"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+    post:
+      operationId: createWebhook
+      tags: [Webhooks]
+      summary: Create a webhook subscription
+      description: The HMAC signing secret is only returned in the create response.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WebhookSubscriptionInput"
+      responses:
+        "201":
+          description: Webhook subscription created (includes secret)
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: "#/components/schemas/WebhookSubscriptionWithSecret"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+
+  /webhooks/{id}:
+    get:
+      operationId: getWebhook
+      tags: [Webhooks]
+      summary: Get a webhook subscription
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Webhook subscription details (secret not included)
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: "#/components/schemas/WebhookSubscription"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    patch:
+      operationId: updateWebhook
+      tags: [Webhooks]
+      summary: Update a webhook subscription
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WebhookSubscriptionInput"
+      responses:
+        "200":
+          description: Webhook subscription updated (secret not included)
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: "#/components/schemas/WebhookSubscription"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+
+    delete:
+      operationId: deleteWebhook
+      tags: [Webhooks]
+      summary: Delete a webhook subscription
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "204":
+          description: Webhook subscription deleted
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+# ── Components ────────────────────────────────────────────────────────────
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      description: API key from Settings > API Keys
+
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+    MonitorId:
+      name: monitor_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+    StatusPageId:
+      name: status_page_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  responses:
+    Unauthorized:
+      description: Missing or invalid API key
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+    Forbidden:
+      description: Insufficient permissions or plan limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+    ValidationError:
+      description: Validation failed
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ValidationError"
+
+    RateLimited:
+      description: Rate limit exceeded
+      headers:
+        retry-after:
+          schema:
+            type: integer
+          description: Seconds until the rate limit resets
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+  schemas:
+    # ── Enums ───────────────────────────────────────────────────────────
+    CheckType:
+      type: string
+      enum: [http, tcp, dns, heartbeat, synthetic]
+
+    MonitorStateEnum:
+      type: string
+      nullable: true
+      enum: [pending, up, down, degraded, stale]
+
+    AlertChannelType:
+      type: string
+      enum:
+        - webhook
+        - slack
+        - discord
+        - email
+        - ilert
+        - incident_io
+        - grafana_irm
+        - mattermost
+        - pagerduty
+        - pushover
+        - teams
+        - ntfy
+        - telegram
+        - sms
+
+    StatusPageTheme:
+      type: string
+      enum: [light, dark, system]
+
+    DomainStatus:
+      type: string
+      enum: [none, pending, active]
+
+    IncidentType:
+      type: string
+      enum: [incident, maintenance]
+
+    IncidentStatus:
+      type: string
+      enum: [investigating, identified, monitoring, resolved, scheduled, in_progress, completed]
+
+    IncidentImpact:
+      type: string
+      enum: [minor, major, critical]
+
+    WebhookEvent:
+      type: string
+      enum:
+        - monitor.state_changed
+        - monitor.created
+        - monitor.updated
+        - monitor.deleted
+
+    # ── Resources ───────────────────────────────────────────────────────
+    Monitor:
+      type: object
+      required: [id, name, check_type, interval_seconds, timeout_ms, enabled, config, inserted_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        check_type:
+          $ref: "#/components/schemas/CheckType"
+        interval_seconds:
+          type: integer
+        timeout_ms:
+          type: integer
+        enabled:
+          type: boolean
+        config:
+          type: object
+          description: Configuration object (structure varies by check_type)
+        confirm_down_minutes:
+          type: integer
+          description: Present for non-synthetic monitors
+        confirm_up_minutes:
+          type: integer
+          description: Present for non-synthetic monitors
+        confirm_down_after:
+          type: integer
+          description: Present for synthetic monitors only
+        confirm_up_after:
+          type: integer
+          description: Present for synthetic monitors only
+        current_state:
+          $ref: "#/components/schemas/MonitorStateEnum"
+        heartbeat_token:
+          type: string
+          description: Present for heartbeat monitors only
+        secret_names:
+          type: array
+          items:
+            type: string
+          description: Present for synthetic monitors only
+        alert_channel_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Present on show (single monitor) responses
+        inserted_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    MonitorInput:
+      type: object
+      properties:
+        name:
+          type: string
+        check_type:
+          $ref: "#/components/schemas/CheckType"
+        interval_seconds:
+          type: integer
+          default: 180
+        timeout_ms:
+          type: integer
+          default: 10000
+          minimum: 1000
+          maximum: 30000
+        enabled:
+          type: boolean
+          default: true
+        config:
+          type: object
+        confirm_down_minutes:
+          type: integer
+          minimum: 0
+          maximum: 30
+        confirm_up_minutes:
+          type: integer
+          minimum: 0
+          maximum: 30
+        confirm_down_after:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: Synthetic monitors only
+        confirm_up_after:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: Synthetic monitors only
+        alert_channel_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        secrets:
+          type: object
+          additionalProperties:
+            type: string
+          description: "Synthetic monitors only. Key-value pairs of secret names and values."
+
+    MonitorState:
+      type: object
+      properties:
+        state:
+          $ref: "#/components/schemas/MonitorStateEnum"
+        entered_at:
+          type: string
+          format: date-time
+          nullable: true
+        previous_state:
+          type: string
+          nullable: true
+
+    MonitorUptime:
+      type: object
+      properties:
+        uptime_pct:
+          type: number
+          format: float
+          description: Uptime percentage (0-100)
+        distribution:
+          type: object
+          description: Status distribution counts
+
+    MonitorResponseTimes:
+      type: object
+      properties:
+        p95:
+          type: number
+          format: float
+          nullable: true
+          description: P95 response time in milliseconds
+        by_location:
+          type: array
+          items:
+            type: object
+            properties:
+              location:
+                type: string
+              p95:
+                type: number
+                format: float
+              checks:
+                type: integer
+          description: P95 response time per probe location
+
+    MonitorCert:
+      type: object
+      properties:
+        cert_expiry:
+          type: string
+          format: date-time
+          nullable: true
+        cert_valid:
+          type: boolean
+          nullable: true
+        cert_issuer:
+          type: string
+          nullable: true
+        cert_subject:
+          type: string
+          nullable: true
+        days_remaining:
+          type: integer
+          nullable: true
+
+    AlertChannel:
+      type: object
+      required: [id, name, type, enabled, default_for_new_monitors, inserted_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        type:
+          $ref: "#/components/schemas/AlertChannelType"
+        enabled:
+          type: boolean
+        default_for_new_monitors:
+          type: boolean
+        broken_at:
+          type: string
+          format: date-time
+          nullable: true
+        broken_reason:
+          type: string
+          nullable: true
+        inserted_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    AlertChannelInput:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          $ref: "#/components/schemas/AlertChannelType"
+        enabled:
+          type: boolean
+          default: true
+        default_for_new_monitors:
+          type: boolean
+          default: false
+        config:
+          type: object
+          description: Configuration object (structure varies by channel type)
+
+    StatusPage:
+      type: object
+      required: [id, name, slug, enabled, inserted_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        slug:
+          type: string
+        description:
+          type: string
+          nullable: true
+        theme:
+          $ref: "#/components/schemas/StatusPageTheme"
+        primary_color:
+          type: string
+          nullable: true
+          description: "Hex color code (#RRGGBB)"
+        enabled:
+          type: boolean
+        subscribers_enabled:
+          type: boolean
+        custom_domain:
+          type: string
+          nullable: true
+        domain_status:
+          $ref: "#/components/schemas/DomainStatus"
+        logo_light_url:
+          type: string
+          nullable: true
+        logo_dark_url:
+          type: string
+          nullable: true
+        url:
+          type: string
+          description: Computed public URL
+        components:
+          type: array
+          items:
+            $ref: "#/components/schemas/StatusPageComponentSummary"
+        inserted_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    StatusPageInput:
+      type: object
+      properties:
+        name:
+          type: string
+        slug:
+          type: string
+          description: "3-63 chars, lowercase alphanumeric and hyphens"
+        description:
+          type: string
+          maxLength: 1000
+        theme:
+          $ref: "#/components/schemas/StatusPageTheme"
+        primary_color:
+          type: string
+        enabled:
+          type: boolean
+        subscribers_enabled:
+          type: boolean
+
+    StatusPageComponentSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        position:
+          type: integer
+
+    Component:
+      type: object
+      required: [id, name, position, inserted_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        position:
+          type: integer
+        component_group_id:
+          type: string
+          format: uuid
+          nullable: true
+        monitors:
+          type: array
+          items:
+            type: object
+            properties:
+              monitor_id:
+                type: string
+                format: uuid
+              down_status:
+                type: string
+        inserted_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ComponentInput:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        position:
+          type: integer
+        component_group_id:
+          type: string
+          format: uuid
+        monitors:
+          type: array
+          items:
+            type: object
+            properties:
+              monitor_id:
+                type: string
+                format: uuid
+              down_status:
+                type: string
+
+    IncidentSummary:
+      type: object
+      required: [id, title, type, status, impact, inserted_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        type:
+          $ref: "#/components/schemas/IncidentType"
+        status:
+          $ref: "#/components/schemas/IncidentStatus"
+        impact:
+          $ref: "#/components/schemas/IncidentImpact"
+        auto_created:
+          type: boolean
+        started_at:
+          type: string
+          format: date-time
+          nullable: true
+        resolved_at:
+          type: string
+          format: date-time
+          nullable: true
+        inserted_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    IncidentDetail:
+      allOf:
+        - $ref: "#/components/schemas/IncidentSummary"
+        - type: object
+          properties:
+            updates:
+              type: array
+              items:
+                $ref: "#/components/schemas/IncidentUpdate"
+            affected_components:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  name:
+                    type: string
+                  status:
+                    type: string
+
+    IncidentUpdate:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+        body:
+          type: string
+        posted_at:
+          type: string
+          format: date-time
+        posted_by:
+          type: string
+          description: Email of the user who posted the update
+          nullable: true
+        posted_by_name:
+          type: string
+          description: Display name of the user who posted the update
+          nullable: true
+
+    IncidentInput:
+      type: object
+      properties:
+        title:
+          type: string
+        type:
+          $ref: "#/components/schemas/IncidentType"
+        status:
+          $ref: "#/components/schemas/IncidentStatus"
+        impact:
+          $ref: "#/components/schemas/IncidentImpact"
+        started_at:
+          type: string
+          format: date-time
+        message:
+          type: string
+          description: Creates an incident update with this body
+        status_page_id:
+          type: string
+          format: uuid
+          description: Publishes to this status page
+        components:
+          type: array
+          description: Components affected on the status page
+          items:
+            type: object
+            properties:
+              component_id:
+                type: string
+                format: uuid
+              severity:
+                type: string
+
+    WebhookSubscription:
+      type: object
+      required: [id, url, events, enabled, inserted_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        url:
+          type: string
+          format: uri
+        events:
+          type: array
+          items:
+            $ref: "#/components/schemas/WebhookEvent"
+        enabled:
+          type: boolean
+        inserted_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    WebhookSubscriptionWithSecret:
+      allOf:
+        - $ref: "#/components/schemas/WebhookSubscription"
+        - type: object
+          required: [secret]
+          properties:
+            secret:
+              type: string
+              description: HMAC-SHA256 signing secret (only returned on create)
+
+    WebhookSubscriptionInput:
+      type: object
+      properties:
+        url:
+          type: string
+          format: uri
+          description: HTTPS URLs only
+        events:
+          type: array
+          items:
+            $ref: "#/components/schemas/WebhookEvent"
+        enabled:
+          type: boolean
+          default: true
+
+    # ── Errors ──────────────────────────────────────────────────────────
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [type, message]
+          properties:
+            type:
+              type: string
+            message:
+              type: string
+
+    ValidationError:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [type, message]
+          properties:
+            type:
+              type: string
+              example: validation_error
+            message:
+              type: string
+            errors:
+              type: object
+              additionalProperties:
+                type: array
+                items:
+                  type: string
+              description: Field-level validation errors
