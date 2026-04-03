@@ -43,14 +43,16 @@ changelog:
       - "^test:"
       - "^ci:"
 
-homebrew_casks:
-  - name: larm
-    binaries:
-      - larm
-    repository:
+brews:
+  - repository:
       owner: larmhq
       name: homebrew-tap
       token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    name: larm
     homepage: https://larm.dev
     description: Larm CLI -- uptime monitoring from the command line
     license: MIT
+    install: |
+      bin.install "larm"
+    test: |
+      system "#{bin}/larm", "--version"
