@@ -17,7 +17,7 @@ var describeCmd = &cobra.Command{
 Useful for LLM agents to discover available functionality.`,
 	Example: `  larm describe
   larm describe monitors.list
-  larm describe incidents`,
+  larm describe disruptions`,
 	Args: cobra.MaximumNArgs(1),
 	RunE: runDescribe,
 }

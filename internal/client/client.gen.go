@@ -103,36 +103,15 @@ func (e CheckType) Valid() bool {
 	}
 }
 
-// Defines values for DomainStatus.
+// Defines values for DisruptionImpact.
 const (
-	DomainStatusActive  DomainStatus = "active"
-	DomainStatusNone    DomainStatus = "none"
-	DomainStatusPending DomainStatus = "pending"
+	Critical DisruptionImpact = "critical"
+	Major    DisruptionImpact = "major"
+	Minor    DisruptionImpact = "minor"
 )
 
-// Valid indicates whether the value is a known member of the DomainStatus enum.
-func (e DomainStatus) Valid() bool {
-	switch e {
-	case DomainStatusActive:
-		return true
-	case DomainStatusNone:
-		return true
-	case DomainStatusPending:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for IncidentImpact.
-const (
-	Critical IncidentImpact = "critical"
-	Major    IncidentImpact = "major"
-	Minor    IncidentImpact = "minor"
-)
-
-// Valid indicates whether the value is a known member of the IncidentImpact enum.
-func (e IncidentImpact) Valid() bool {
+// Valid indicates whether the value is a known member of the DisruptionImpact enum.
+func (e DisruptionImpact) Valid() bool {
 	switch e {
 	case Critical:
 		return true
@@ -145,19 +124,19 @@ func (e IncidentImpact) Valid() bool {
 	}
 }
 
-// Defines values for IncidentStatus.
+// Defines values for DisruptionStatus.
 const (
-	Completed     IncidentStatus = "completed"
-	Identified    IncidentStatus = "identified"
-	InProgress    IncidentStatus = "in_progress"
-	Investigating IncidentStatus = "investigating"
-	Monitoring    IncidentStatus = "monitoring"
-	Resolved      IncidentStatus = "resolved"
-	Scheduled     IncidentStatus = "scheduled"
+	Completed     DisruptionStatus = "completed"
+	Identified    DisruptionStatus = "identified"
+	InProgress    DisruptionStatus = "in_progress"
+	Investigating DisruptionStatus = "investigating"
+	Monitoring    DisruptionStatus = "monitoring"
+	Resolved      DisruptionStatus = "resolved"
+	Scheduled     DisruptionStatus = "scheduled"
 )
 
-// Valid indicates whether the value is a known member of the IncidentStatus enum.
-func (e IncidentStatus) Valid() bool {
+// Valid indicates whether the value is a known member of the DisruptionStatus enum.
+func (e DisruptionStatus) Valid() bool {
 	switch e {
 	case Completed:
 		return true
@@ -178,18 +157,39 @@ func (e IncidentStatus) Valid() bool {
 	}
 }
 
-// Defines values for IncidentType.
+// Defines values for DisruptionType.
 const (
-	Incident    IncidentType = "incident"
-	Maintenance IncidentType = "maintenance"
+	Disruption  DisruptionType = "disruption"
+	Maintenance DisruptionType = "maintenance"
 )
 
-// Valid indicates whether the value is a known member of the IncidentType enum.
-func (e IncidentType) Valid() bool {
+// Valid indicates whether the value is a known member of the DisruptionType enum.
+func (e DisruptionType) Valid() bool {
 	switch e {
-	case Incident:
+	case Disruption:
 		return true
 	case Maintenance:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for DomainStatus.
+const (
+	DomainStatusActive  DomainStatus = "active"
+	DomainStatusNone    DomainStatus = "none"
+	DomainStatusPending DomainStatus = "pending"
+)
+
+// Valid indicates whether the value is a known member of the DomainStatus enum.
+func (e DomainStatus) Valid() bool {
+	switch e {
+	case DomainStatusActive:
+		return true
+	case DomainStatusNone:
+		return true
+	case DomainStatusPending:
 		return true
 	default:
 		return false
@@ -324,82 +324,71 @@ type ComponentInput struct {
 	Position *int    `json:"position,omitempty"`
 }
 
-// DomainStatus defines model for DomainStatus.
-type DomainStatus string
-
-// Error defines model for Error.
-type Error struct {
-	Error struct {
-		Message string `json:"message"`
-		Type    string `json:"type"`
-	} `json:"error"`
-}
-
-// IncidentDetail defines model for IncidentDetail.
-type IncidentDetail struct {
+// DisruptionDetail defines model for DisruptionDetail.
+type DisruptionDetail struct {
 	AffectedComponents *[]struct {
 		Id     *openapi_types.UUID `json:"id,omitempty"`
 		Name   *string             `json:"name,omitempty"`
 		Status *string             `json:"status,omitempty"`
 	} `json:"affected_components,omitempty"`
-	AutoCreated *bool              `json:"auto_created,omitempty"`
-	Id          openapi_types.UUID `json:"id"`
-	Impact      IncidentImpact     `json:"impact"`
-	InsertedAt  time.Time          `json:"inserted_at"`
-	ResolvedAt  *time.Time         `json:"resolved_at,omitempty"`
-	StartedAt   *time.Time         `json:"started_at,omitempty"`
-	Status      IncidentStatus     `json:"status"`
-	Title       string             `json:"title"`
-	Type        IncidentType       `json:"type"`
-	UpdatedAt   time.Time          `json:"updated_at"`
-	Updates     *[]IncidentUpdate  `json:"updates,omitempty"`
+	AutoCreated *bool               `json:"auto_created,omitempty"`
+	Id          openapi_types.UUID  `json:"id"`
+	Impact      DisruptionImpact    `json:"impact"`
+	InsertedAt  time.Time           `json:"inserted_at"`
+	ResolvedAt  *time.Time          `json:"resolved_at,omitempty"`
+	StartedAt   *time.Time          `json:"started_at,omitempty"`
+	Status      DisruptionStatus    `json:"status"`
+	Title       string              `json:"title"`
+	Type        DisruptionType      `json:"type"`
+	UpdatedAt   time.Time           `json:"updated_at"`
+	Updates     *[]DisruptionUpdate `json:"updates,omitempty"`
 }
 
-// IncidentImpact defines model for IncidentImpact.
-type IncidentImpact string
+// DisruptionImpact defines model for DisruptionImpact.
+type DisruptionImpact string
 
-// IncidentInput defines model for IncidentInput.
-type IncidentInput struct {
+// DisruptionInput defines model for DisruptionInput.
+type DisruptionInput struct {
 	// Components Components affected on the status page
 	Components *[]struct {
 		ComponentId *openapi_types.UUID `json:"component_id,omitempty"`
 		Severity    *string             `json:"severity,omitempty"`
 	} `json:"components,omitempty"`
-	Impact *IncidentImpact `json:"impact,omitempty"`
+	Impact *DisruptionImpact `json:"impact,omitempty"`
 
-	// Message Creates an incident update with this body
-	Message   *string         `json:"message,omitempty"`
-	StartedAt *time.Time      `json:"started_at,omitempty"`
-	Status    *IncidentStatus `json:"status,omitempty"`
+	// Message Creates a disruption update with this body
+	Message   *string           `json:"message,omitempty"`
+	StartedAt *time.Time        `json:"started_at,omitempty"`
+	Status    *DisruptionStatus `json:"status,omitempty"`
 
 	// StatusPageId Publishes to this status page
 	StatusPageId *openapi_types.UUID `json:"status_page_id,omitempty"`
 	Title        *string             `json:"title,omitempty"`
-	Type         *IncidentType       `json:"type,omitempty"`
+	Type         *DisruptionType     `json:"type,omitempty"`
 }
 
-// IncidentStatus defines model for IncidentStatus.
-type IncidentStatus string
+// DisruptionStatus defines model for DisruptionStatus.
+type DisruptionStatus string
 
-// IncidentSummary defines model for IncidentSummary.
-type IncidentSummary struct {
+// DisruptionSummary defines model for DisruptionSummary.
+type DisruptionSummary struct {
 	AutoCreated *bool              `json:"auto_created,omitempty"`
 	Id          openapi_types.UUID `json:"id"`
-	Impact      IncidentImpact     `json:"impact"`
+	Impact      DisruptionImpact   `json:"impact"`
 	InsertedAt  time.Time          `json:"inserted_at"`
 	ResolvedAt  *time.Time         `json:"resolved_at,omitempty"`
 	StartedAt   *time.Time         `json:"started_at,omitempty"`
-	Status      IncidentStatus     `json:"status"`
+	Status      DisruptionStatus   `json:"status"`
 	Title       string             `json:"title"`
-	Type        IncidentType       `json:"type"`
+	Type        DisruptionType     `json:"type"`
 	UpdatedAt   time.Time          `json:"updated_at"`
 }
 
-// IncidentType defines model for IncidentType.
-type IncidentType string
+// DisruptionType defines model for DisruptionType.
+type DisruptionType string
 
-// IncidentUpdate defines model for IncidentUpdate.
-type IncidentUpdate struct {
+// DisruptionUpdate defines model for DisruptionUpdate.
+type DisruptionUpdate struct {
 	Body     *string             `json:"body,omitempty"`
 	Id       *openapi_types.UUID `json:"id,omitempty"`
 	PostedAt *time.Time          `json:"posted_at,omitempty"`
@@ -410,6 +399,17 @@ type IncidentUpdate struct {
 	// PostedByName Display name of the user who posted the update
 	PostedByName *string `json:"posted_by_name,omitempty"`
 	Status       *string `json:"status,omitempty"`
+}
+
+// DomainStatus defines model for DomainStatus.
+type DomainStatus string
+
+// Error defines model for Error.
+type Error struct {
+	Error struct {
+		Message string `json:"message"`
+		Type    string `json:"type"`
+	} `json:"error"`
 }
 
 // Monitor defines model for Monitor.
@@ -639,11 +639,11 @@ type CreateAlertChannelJSONRequestBody = AlertChannelInput
 // UpdateAlertChannelJSONRequestBody defines body for UpdateAlertChannel for application/json ContentType.
 type UpdateAlertChannelJSONRequestBody = AlertChannelInput
 
-// CreateIncidentJSONRequestBody defines body for CreateIncident for application/json ContentType.
-type CreateIncidentJSONRequestBody = IncidentInput
+// CreateDisruptionJSONRequestBody defines body for CreateDisruption for application/json ContentType.
+type CreateDisruptionJSONRequestBody = DisruptionInput
 
-// UpdateIncidentJSONRequestBody defines body for UpdateIncident for application/json ContentType.
-type UpdateIncidentJSONRequestBody = IncidentInput
+// UpdateDisruptionJSONRequestBody defines body for UpdateDisruption for application/json ContentType.
+type UpdateDisruptionJSONRequestBody = DisruptionInput
 
 // CreateMonitorJSONRequestBody defines body for CreateMonitor for application/json ContentType.
 type CreateMonitorJSONRequestBody = MonitorInput
@@ -761,21 +761,21 @@ type ClientInterface interface {
 
 	UpdateAlertChannel(ctx context.Context, id Id, body UpdateAlertChannelJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// ListIncidents request
-	ListIncidents(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ListDisruptions request
+	ListDisruptions(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// CreateIncidentWithBody request with any body
-	CreateIncidentWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// CreateDisruptionWithBody request with any body
+	CreateDisruptionWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	CreateIncident(ctx context.Context, body CreateIncidentJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	CreateDisruption(ctx context.Context, body CreateDisruptionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetIncident request
-	GetIncident(ctx context.Context, id Id, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// GetDisruption request
+	GetDisruption(ctx context.Context, id Id, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// UpdateIncidentWithBody request with any body
-	UpdateIncidentWithBody(ctx context.Context, id Id, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// UpdateDisruptionWithBody request with any body
+	UpdateDisruptionWithBody(ctx context.Context, id Id, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	UpdateIncident(ctx context.Context, id Id, body UpdateIncidentJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	UpdateDisruption(ctx context.Context, id Id, body UpdateDisruptionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListMonitors request
 	ListMonitors(ctx context.Context, params *ListMonitorsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -950,8 +950,8 @@ func (c *Client) UpdateAlertChannel(ctx context.Context, id Id, body UpdateAlert
 	return c.Client.Do(req)
 }
 
-func (c *Client) ListIncidents(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewListIncidentsRequest(c.Server)
+func (c *Client) ListDisruptions(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListDisruptionsRequest(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -962,8 +962,8 @@ func (c *Client) ListIncidents(ctx context.Context, reqEditors ...RequestEditorF
 	return c.Client.Do(req)
 }
 
-func (c *Client) CreateIncidentWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCreateIncidentRequestWithBody(c.Server, contentType, body)
+func (c *Client) CreateDisruptionWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateDisruptionRequestWithBody(c.Server, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -974,8 +974,8 @@ func (c *Client) CreateIncidentWithBody(ctx context.Context, contentType string,
 	return c.Client.Do(req)
 }
 
-func (c *Client) CreateIncident(ctx context.Context, body CreateIncidentJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCreateIncidentRequest(c.Server, body)
+func (c *Client) CreateDisruption(ctx context.Context, body CreateDisruptionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateDisruptionRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -986,8 +986,8 @@ func (c *Client) CreateIncident(ctx context.Context, body CreateIncidentJSONRequ
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetIncident(ctx context.Context, id Id, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetIncidentRequest(c.Server, id)
+func (c *Client) GetDisruption(ctx context.Context, id Id, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetDisruptionRequest(c.Server, id)
 	if err != nil {
 		return nil, err
 	}
@@ -998,8 +998,8 @@ func (c *Client) GetIncident(ctx context.Context, id Id, reqEditors ...RequestEd
 	return c.Client.Do(req)
 }
 
-func (c *Client) UpdateIncidentWithBody(ctx context.Context, id Id, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewUpdateIncidentRequestWithBody(c.Server, id, contentType, body)
+func (c *Client) UpdateDisruptionWithBody(ctx context.Context, id Id, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateDisruptionRequestWithBody(c.Server, id, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -1010,8 +1010,8 @@ func (c *Client) UpdateIncidentWithBody(ctx context.Context, id Id, contentType 
 	return c.Client.Do(req)
 }
 
-func (c *Client) UpdateIncident(ctx context.Context, id Id, body UpdateIncidentJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewUpdateIncidentRequest(c.Server, id, body)
+func (c *Client) UpdateDisruption(ctx context.Context, id Id, body UpdateDisruptionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateDisruptionRequest(c.Server, id, body)
 	if err != nil {
 		return nil, err
 	}
@@ -1588,8 +1588,8 @@ func NewUpdateAlertChannelRequestWithBody(server string, id Id, contentType stri
 	return req, nil
 }
 
-// NewListIncidentsRequest generates requests for ListIncidents
-func NewListIncidentsRequest(server string) (*http.Request, error) {
+// NewListDisruptionsRequest generates requests for ListDisruptions
+func NewListDisruptionsRequest(server string) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -1597,7 +1597,7 @@ func NewListIncidentsRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/incidents")
+	operationPath := fmt.Sprintf("/disruptions")
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1615,19 +1615,19 @@ func NewListIncidentsRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
-// NewCreateIncidentRequest calls the generic CreateIncident builder with application/json body
-func NewCreateIncidentRequest(server string, body CreateIncidentJSONRequestBody) (*http.Request, error) {
+// NewCreateDisruptionRequest calls the generic CreateDisruption builder with application/json body
+func NewCreateDisruptionRequest(server string, body CreateDisruptionJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewCreateIncidentRequestWithBody(server, "application/json", bodyReader)
+	return NewCreateDisruptionRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewCreateIncidentRequestWithBody generates requests for CreateIncident with any type of body
-func NewCreateIncidentRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+// NewCreateDisruptionRequestWithBody generates requests for CreateDisruption with any type of body
+func NewCreateDisruptionRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -1635,7 +1635,7 @@ func NewCreateIncidentRequestWithBody(server string, contentType string, body io
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/incidents")
+	operationPath := fmt.Sprintf("/disruptions")
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1655,8 +1655,8 @@ func NewCreateIncidentRequestWithBody(server string, contentType string, body io
 	return req, nil
 }
 
-// NewGetIncidentRequest generates requests for GetIncident
-func NewGetIncidentRequest(server string, id Id) (*http.Request, error) {
+// NewGetDisruptionRequest generates requests for GetDisruption
+func NewGetDisruptionRequest(server string, id Id) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -1671,7 +1671,7 @@ func NewGetIncidentRequest(server string, id Id) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/incidents/%s", pathParam0)
+	operationPath := fmt.Sprintf("/disruptions/%s", pathParam0)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1689,19 +1689,19 @@ func NewGetIncidentRequest(server string, id Id) (*http.Request, error) {
 	return req, nil
 }
 
-// NewUpdateIncidentRequest calls the generic UpdateIncident builder with application/json body
-func NewUpdateIncidentRequest(server string, id Id, body UpdateIncidentJSONRequestBody) (*http.Request, error) {
+// NewUpdateDisruptionRequest calls the generic UpdateDisruption builder with application/json body
+func NewUpdateDisruptionRequest(server string, id Id, body UpdateDisruptionJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewUpdateIncidentRequestWithBody(server, id, "application/json", bodyReader)
+	return NewUpdateDisruptionRequestWithBody(server, id, "application/json", bodyReader)
 }
 
-// NewUpdateIncidentRequestWithBody generates requests for UpdateIncident with any type of body
-func NewUpdateIncidentRequestWithBody(server string, id Id, contentType string, body io.Reader) (*http.Request, error) {
+// NewUpdateDisruptionRequestWithBody generates requests for UpdateDisruption with any type of body
+func NewUpdateDisruptionRequestWithBody(server string, id Id, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -1716,7 +1716,7 @@ func NewUpdateIncidentRequestWithBody(server string, id Id, contentType string, 
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/incidents/%s", pathParam0)
+	operationPath := fmt.Sprintf("/disruptions/%s", pathParam0)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -2757,21 +2757,21 @@ type ClientWithResponsesInterface interface {
 
 	UpdateAlertChannelWithResponse(ctx context.Context, id Id, body UpdateAlertChannelJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateAlertChannelResponse, error)
 
-	// ListIncidentsWithResponse request
-	ListIncidentsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListIncidentsResponse, error)
+	// ListDisruptionsWithResponse request
+	ListDisruptionsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListDisruptionsResponse, error)
 
-	// CreateIncidentWithBodyWithResponse request with any body
-	CreateIncidentWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateIncidentResponse, error)
+	// CreateDisruptionWithBodyWithResponse request with any body
+	CreateDisruptionWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateDisruptionResponse, error)
 
-	CreateIncidentWithResponse(ctx context.Context, body CreateIncidentJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateIncidentResponse, error)
+	CreateDisruptionWithResponse(ctx context.Context, body CreateDisruptionJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateDisruptionResponse, error)
 
-	// GetIncidentWithResponse request
-	GetIncidentWithResponse(ctx context.Context, id Id, reqEditors ...RequestEditorFn) (*GetIncidentResponse, error)
+	// GetDisruptionWithResponse request
+	GetDisruptionWithResponse(ctx context.Context, id Id, reqEditors ...RequestEditorFn) (*GetDisruptionResponse, error)
 
-	// UpdateIncidentWithBodyWithResponse request with any body
-	UpdateIncidentWithBodyWithResponse(ctx context.Context, id Id, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateIncidentResponse, error)
+	// UpdateDisruptionWithBodyWithResponse request with any body
+	UpdateDisruptionWithBodyWithResponse(ctx context.Context, id Id, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateDisruptionResponse, error)
 
-	UpdateIncidentWithResponse(ctx context.Context, id Id, body UpdateIncidentJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateIncidentResponse, error)
+	UpdateDisruptionWithResponse(ctx context.Context, id Id, body UpdateDisruptionJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateDisruptionResponse, error)
 
 	// ListMonitorsWithResponse request
 	ListMonitorsWithResponse(ctx context.Context, params *ListMonitorsParams, reqEditors ...RequestEditorFn) (*ListMonitorsResponse, error)
@@ -2990,17 +2990,17 @@ func (r UpdateAlertChannelResponse) StatusCode() int {
 	return 0
 }
 
-type ListIncidentsResponse struct {
+type ListDisruptionsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *struct {
-		Data []IncidentSummary `json:"data"`
+		Data []DisruptionSummary `json:"data"`
 	}
 	JSON401 *Unauthorized
 }
 
 // Status returns HTTPResponse.Status
-func (r ListIncidentsResponse) Status() string {
+func (r ListDisruptionsResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -3008,25 +3008,25 @@ func (r ListIncidentsResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r ListIncidentsResponse) StatusCode() int {
+func (r ListDisruptionsResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type CreateIncidentResponse struct {
+type CreateDisruptionResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON201      *struct {
-		Data IncidentDetail `json:"data"`
+		Data DisruptionDetail `json:"data"`
 	}
 	JSON401 *Unauthorized
 	JSON422 *ValidationError
 }
 
 // Status returns HTTPResponse.Status
-func (r CreateIncidentResponse) Status() string {
+func (r CreateDisruptionResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -3034,25 +3034,25 @@ func (r CreateIncidentResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r CreateIncidentResponse) StatusCode() int {
+func (r CreateDisruptionResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type GetIncidentResponse struct {
+type GetDisruptionResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *struct {
-		Data IncidentDetail `json:"data"`
+		Data DisruptionDetail `json:"data"`
 	}
 	JSON401 *Unauthorized
 	JSON404 *NotFound
 }
 
 // Status returns HTTPResponse.Status
-func (r GetIncidentResponse) Status() string {
+func (r GetDisruptionResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -3060,18 +3060,18 @@ func (r GetIncidentResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetIncidentResponse) StatusCode() int {
+func (r GetDisruptionResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type UpdateIncidentResponse struct {
+type UpdateDisruptionResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *struct {
-		Data IncidentDetail `json:"data"`
+		Data DisruptionDetail `json:"data"`
 	}
 	JSON401 *Unauthorized
 	JSON404 *NotFound
@@ -3079,7 +3079,7 @@ type UpdateIncidentResponse struct {
 }
 
 // Status returns HTTPResponse.Status
-func (r UpdateIncidentResponse) Status() string {
+func (r UpdateDisruptionResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -3087,7 +3087,7 @@ func (r UpdateIncidentResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r UpdateIncidentResponse) StatusCode() int {
+func (r UpdateDisruptionResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -3772,56 +3772,56 @@ func (c *ClientWithResponses) UpdateAlertChannelWithResponse(ctx context.Context
 	return ParseUpdateAlertChannelResponse(rsp)
 }
 
-// ListIncidentsWithResponse request returning *ListIncidentsResponse
-func (c *ClientWithResponses) ListIncidentsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListIncidentsResponse, error) {
-	rsp, err := c.ListIncidents(ctx, reqEditors...)
+// ListDisruptionsWithResponse request returning *ListDisruptionsResponse
+func (c *ClientWithResponses) ListDisruptionsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListDisruptionsResponse, error) {
+	rsp, err := c.ListDisruptions(ctx, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseListIncidentsResponse(rsp)
+	return ParseListDisruptionsResponse(rsp)
 }
 
-// CreateIncidentWithBodyWithResponse request with arbitrary body returning *CreateIncidentResponse
-func (c *ClientWithResponses) CreateIncidentWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateIncidentResponse, error) {
-	rsp, err := c.CreateIncidentWithBody(ctx, contentType, body, reqEditors...)
+// CreateDisruptionWithBodyWithResponse request with arbitrary body returning *CreateDisruptionResponse
+func (c *ClientWithResponses) CreateDisruptionWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateDisruptionResponse, error) {
+	rsp, err := c.CreateDisruptionWithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseCreateIncidentResponse(rsp)
+	return ParseCreateDisruptionResponse(rsp)
 }
 
-func (c *ClientWithResponses) CreateIncidentWithResponse(ctx context.Context, body CreateIncidentJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateIncidentResponse, error) {
-	rsp, err := c.CreateIncident(ctx, body, reqEditors...)
+func (c *ClientWithResponses) CreateDisruptionWithResponse(ctx context.Context, body CreateDisruptionJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateDisruptionResponse, error) {
+	rsp, err := c.CreateDisruption(ctx, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseCreateIncidentResponse(rsp)
+	return ParseCreateDisruptionResponse(rsp)
 }
 
-// GetIncidentWithResponse request returning *GetIncidentResponse
-func (c *ClientWithResponses) GetIncidentWithResponse(ctx context.Context, id Id, reqEditors ...RequestEditorFn) (*GetIncidentResponse, error) {
-	rsp, err := c.GetIncident(ctx, id, reqEditors...)
+// GetDisruptionWithResponse request returning *GetDisruptionResponse
+func (c *ClientWithResponses) GetDisruptionWithResponse(ctx context.Context, id Id, reqEditors ...RequestEditorFn) (*GetDisruptionResponse, error) {
+	rsp, err := c.GetDisruption(ctx, id, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetIncidentResponse(rsp)
+	return ParseGetDisruptionResponse(rsp)
 }
 
-// UpdateIncidentWithBodyWithResponse request with arbitrary body returning *UpdateIncidentResponse
-func (c *ClientWithResponses) UpdateIncidentWithBodyWithResponse(ctx context.Context, id Id, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateIncidentResponse, error) {
-	rsp, err := c.UpdateIncidentWithBody(ctx, id, contentType, body, reqEditors...)
+// UpdateDisruptionWithBodyWithResponse request with arbitrary body returning *UpdateDisruptionResponse
+func (c *ClientWithResponses) UpdateDisruptionWithBodyWithResponse(ctx context.Context, id Id, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateDisruptionResponse, error) {
+	rsp, err := c.UpdateDisruptionWithBody(ctx, id, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseUpdateIncidentResponse(rsp)
+	return ParseUpdateDisruptionResponse(rsp)
 }
 
-func (c *ClientWithResponses) UpdateIncidentWithResponse(ctx context.Context, id Id, body UpdateIncidentJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateIncidentResponse, error) {
-	rsp, err := c.UpdateIncident(ctx, id, body, reqEditors...)
+func (c *ClientWithResponses) UpdateDisruptionWithResponse(ctx context.Context, id Id, body UpdateDisruptionJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateDisruptionResponse, error) {
+	rsp, err := c.UpdateDisruption(ctx, id, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseUpdateIncidentResponse(rsp)
+	return ParseUpdateDisruptionResponse(rsp)
 }
 
 // ListMonitorsWithResponse request returning *ListMonitorsResponse
@@ -4312,15 +4312,15 @@ func ParseUpdateAlertChannelResponse(rsp *http.Response) (*UpdateAlertChannelRes
 	return response, nil
 }
 
-// ParseListIncidentsResponse parses an HTTP response from a ListIncidentsWithResponse call
-func ParseListIncidentsResponse(rsp *http.Response) (*ListIncidentsResponse, error) {
+// ParseListDisruptionsResponse parses an HTTP response from a ListDisruptionsWithResponse call
+func ParseListDisruptionsResponse(rsp *http.Response) (*ListDisruptionsResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &ListIncidentsResponse{
+	response := &ListDisruptionsResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -4328,7 +4328,7 @@ func ParseListIncidentsResponse(rsp *http.Response) (*ListIncidentsResponse, err
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest struct {
-			Data []IncidentSummary `json:"data"`
+			Data []DisruptionSummary `json:"data"`
 		}
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
@@ -4347,15 +4347,15 @@ func ParseListIncidentsResponse(rsp *http.Response) (*ListIncidentsResponse, err
 	return response, nil
 }
 
-// ParseCreateIncidentResponse parses an HTTP response from a CreateIncidentWithResponse call
-func ParseCreateIncidentResponse(rsp *http.Response) (*CreateIncidentResponse, error) {
+// ParseCreateDisruptionResponse parses an HTTP response from a CreateDisruptionWithResponse call
+func ParseCreateDisruptionResponse(rsp *http.Response) (*CreateDisruptionResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &CreateIncidentResponse{
+	response := &CreateDisruptionResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -4363,7 +4363,7 @@ func ParseCreateIncidentResponse(rsp *http.Response) (*CreateIncidentResponse, e
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
 		var dest struct {
-			Data IncidentDetail `json:"data"`
+			Data DisruptionDetail `json:"data"`
 		}
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
@@ -4389,15 +4389,15 @@ func ParseCreateIncidentResponse(rsp *http.Response) (*CreateIncidentResponse, e
 	return response, nil
 }
 
-// ParseGetIncidentResponse parses an HTTP response from a GetIncidentWithResponse call
-func ParseGetIncidentResponse(rsp *http.Response) (*GetIncidentResponse, error) {
+// ParseGetDisruptionResponse parses an HTTP response from a GetDisruptionWithResponse call
+func ParseGetDisruptionResponse(rsp *http.Response) (*GetDisruptionResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetIncidentResponse{
+	response := &GetDisruptionResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -4405,7 +4405,7 @@ func ParseGetIncidentResponse(rsp *http.Response) (*GetIncidentResponse, error) 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest struct {
-			Data IncidentDetail `json:"data"`
+			Data DisruptionDetail `json:"data"`
 		}
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
@@ -4431,15 +4431,15 @@ func ParseGetIncidentResponse(rsp *http.Response) (*GetIncidentResponse, error) 
 	return response, nil
 }
 
-// ParseUpdateIncidentResponse parses an HTTP response from a UpdateIncidentWithResponse call
-func ParseUpdateIncidentResponse(rsp *http.Response) (*UpdateIncidentResponse, error) {
+// ParseUpdateDisruptionResponse parses an HTTP response from a UpdateDisruptionWithResponse call
+func ParseUpdateDisruptionResponse(rsp *http.Response) (*UpdateDisruptionResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &UpdateIncidentResponse{
+	response := &UpdateDisruptionResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -4447,7 +4447,7 @@ func ParseUpdateIncidentResponse(rsp *http.Response) (*UpdateIncidentResponse, e
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest struct {
-			Data IncidentDetail `json:"data"`
+			Data DisruptionDetail `json:"data"`
 		}
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err

@@ -11,73 +11,73 @@ import (
 	"github.com/larmhq/larm-cli/internal/output"
 )
 
-var incidentsCmd = &cobra.Command{
-	Use:   "incidents",
-	Short: "Manage incidents",
+var disruptionsCmd = &cobra.Command{
+	Use:   "disruptions",
+	Short: "Manage disruptions",
 }
 
-var incidentsListCmd = &cobra.Command{
+var disruptionsListCmd = &cobra.Command{
 	Use:   "list",
-	Short: "List incidents",
-	Example: `  larm incidents list
-  larm incidents list --output json --jq '[.[] | select(.status != "resolved")]'`,
-	RunE: runIncidentsList,
+	Short: "List disruptions",
+	Example: `  larm disruptions list
+  larm disruptions list --output json --jq '[.[] | select(.status != "resolved")]'`,
+	RunE: runDisruptionsList,
 }
 
-var incidentsShowCmd = &cobra.Command{
+var disruptionsShowCmd = &cobra.Command{
 	Use:   "show <id>",
-	Short: "Show an incident",
-	Example: `  larm incidents show <id>
-  larm incidents show <id> --output json --jq '.updates'`,
+	Short: "Show a disruption",
+	Example: `  larm disruptions show <id>
+  larm disruptions show <id> --output json --jq '.updates'`,
 	Args: cobra.ExactArgs(1),
-	RunE: runIncidentsShow,
+	RunE: runDisruptionsShow,
 }
 
-var incidentsCreateCmd = &cobra.Command{
+var disruptionsCreateCmd = &cobra.Command{
 	Use:   "create",
-	Short: "Create an incident",
-	Example: `  larm incidents create --title "API outage" --impact critical
-  larm incidents create --title "Maintenance" --type maintenance --message "Upgrading database"`,
-	RunE: runIncidentsCreate,
+	Short: "Create a disruption",
+	Example: `  larm disruptions create --title "API outage" --impact critical
+  larm disruptions create --title "Maintenance" --type maintenance --message "Upgrading database"`,
+	RunE: runDisruptionsCreate,
 }
 
-var incidentsUpdateCmd = &cobra.Command{
+var disruptionsUpdateCmd = &cobra.Command{
 	Use:   "update <id>",
-	Short: "Update an incident",
-	Example: `  larm incidents update <id> --message "Fix deployed, monitoring"
-  larm incidents update <id> --status resolved`,
+	Short: "Update a disruption",
+	Example: `  larm disruptions update <id> --message "Fix deployed, monitoring"
+  larm disruptions update <id> --status resolved`,
 	Args: cobra.ExactArgs(1),
-	RunE: runIncidentsUpdate,
+	RunE: runDisruptionsUpdate,
 }
 
 func init() {
-	incidentsCreateCmd.Flags().String("title", "", "Incident title")
-	incidentsCreateCmd.Flags().String("type", "incident", "Type: incident or maintenance")
-	incidentsCreateCmd.Flags().String("impact", "major", "Impact: minor, major, or critical")
-	incidentsCreateCmd.Flags().String("message", "", "Initial timeline entry")
-	incidentsCreateCmd.Flags().String("status-page-id", "", "Publish to this status page")
-	_ = incidentsCreateCmd.MarkFlagRequired("title")
+	disruptionsCreateCmd.Flags().String("title", "", "Disruption title")
+	disruptionsCreateCmd.Flags().String("type", "disruption", "Type: disruption or maintenance")
+	disruptionsCreateCmd.Flags().String("impact", "major", "Impact: minor, major, or critical")
+	disruptionsCreateCmd.Flags().String("message", "", "Initial timeline entry")
+	disruptionsCreateCmd.Flags().String("status-page-id", "", "Publish to this status page")
+	_ = disruptionsCreateCmd.MarkFlagRequired("title")
 
-	incidentsUpdateCmd.Flags().String("title", "", "New title")
-	incidentsUpdateCmd.Flags().String("impact", "", "New impact")
-	incidentsUpdateCmd.Flags().String("status", "", "New status (investigating, identified, monitoring, resolved)")
-	incidentsUpdateCmd.Flags().String("message", "", "Add a timeline entry")
-	incidentsUpdateCmd.Flags().String("status-page-id", "", "Publish to this status page")
+	disruptionsUpdateCmd.Flags().String("title", "", "New title")
+	disruptionsUpdateCmd.Flags().String("impact", "", "New impact")
+	disruptionsUpdateCmd.Flags().String("status", "", "New status (investigating, identified, monitoring, resolved)")
+	disruptionsUpdateCmd.Flags().String("message", "", "Add a timeline entry")
+	disruptionsUpdateCmd.Flags().String("status-page-id", "", "Publish to this status page")
 
-	incidentsCmd.AddCommand(incidentsListCmd)
-	incidentsCmd.AddCommand(incidentsShowCmd)
-	incidentsCmd.AddCommand(incidentsCreateCmd)
-	incidentsCmd.AddCommand(incidentsUpdateCmd)
-	rootCmd.AddCommand(incidentsCmd)
+	disruptionsCmd.AddCommand(disruptionsListCmd)
+	disruptionsCmd.AddCommand(disruptionsShowCmd)
+	disruptionsCmd.AddCommand(disruptionsCreateCmd)
+	disruptionsCmd.AddCommand(disruptionsUpdateCmd)
+	rootCmd.AddCommand(disruptionsCmd)
 }
 
-func runIncidentsList(cmd *cobra.Command, _ []string) error {
+func runDisruptionsList(cmd *cobra.Command, _ []string) error {
 	c, err := newTypedClient(cmd)
 	if err != nil {
 		return err
 	}
 
-	resp, err := c.ListIncidentsWithResponse(cmd.Context())
+	resp, err := c.ListDisruptionsWithResponse(cmd.Context())
 	if err != nil {
 		return err
 	}
@@ -90,7 +90,7 @@ func runIncidentsList(cmd *cobra.Command, _ []string) error {
 		}})
 }
 
-func runIncidentsShow(cmd *cobra.Command, args []string) error {
+func runDisruptionsShow(cmd *cobra.Command, args []string) error {
 	c, err := newTypedClient(cmd)
 	if err != nil {
 		return err
@@ -101,32 +101,32 @@ func runIncidentsShow(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	resp, err := c.GetIncidentWithResponse(cmd.Context(), id)
+	resp, err := c.GetDisruptionWithResponse(cmd.Context(), id)
 	if err != nil {
 		return err
 	}
 
 	return handleAndPrintWithDefaults(cmd, resp.StatusCode(), resp.Body, "",
-		output.PrintOpts{ViewFunc: viewIncident})
+		output.PrintOpts{ViewFunc: viewDisruption})
 }
 
-func runIncidentsCreate(cmd *cobra.Command, _ []string) error {
+func runDisruptionsCreate(cmd *cobra.Command, _ []string) error {
 	c, err := newTypedClient(cmd)
 	if err != nil {
 		return err
 	}
 
 	title, _ := cmd.Flags().GetString("title")
-	incType, _ := cmd.Flags().GetString("type")
+	dispType, _ := cmd.Flags().GetString("type")
 	impact, _ := cmd.Flags().GetString("impact")
 	message, _ := cmd.Flags().GetString("message")
 	statusPageID, _ := cmd.Flags().GetString("status-page-id")
 
-	it := client.IncidentType(incType)
-	imp := client.IncidentImpact(impact)
-	body := client.CreateIncidentJSONRequestBody{
+	dt := client.DisruptionType(dispType)
+	imp := client.DisruptionImpact(impact)
+	body := client.CreateDisruptionJSONRequestBody{
 		Title:  &title,
-		Type:   &it,
+		Type:   &dt,
 		Impact: &imp,
 	}
 
@@ -141,16 +141,16 @@ func runIncidentsCreate(cmd *cobra.Command, _ []string) error {
 		body.StatusPageId = &spID
 	}
 
-	resp, err := c.CreateIncidentWithResponse(cmd.Context(), body)
+	resp, err := c.CreateDisruptionWithResponse(cmd.Context(), body)
 	if err != nil {
 		return err
 	}
 
 	return handleAndPrintWithDefaults(cmd, resp.StatusCode(), resp.Body, "",
-		output.PrintOpts{ViewFunc: viewIncident})
+		output.PrintOpts{ViewFunc: viewDisruption})
 }
 
-func runIncidentsUpdate(cmd *cobra.Command, args []string) error {
+func runDisruptionsUpdate(cmd *cobra.Command, args []string) error {
 	c, err := newTypedClient(cmd)
 	if err != nil {
 		return err
@@ -161,7 +161,7 @@ func runIncidentsUpdate(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	body := client.UpdateIncidentJSONRequestBody{}
+	body := client.UpdateDisruptionJSONRequestBody{}
 
 	if cmd.Flags().Changed("title") {
 		title, _ := cmd.Flags().GetString("title")
@@ -169,12 +169,12 @@ func runIncidentsUpdate(cmd *cobra.Command, args []string) error {
 	}
 	if cmd.Flags().Changed("impact") {
 		impact, _ := cmd.Flags().GetString("impact")
-		imp := client.IncidentImpact(impact)
+		imp := client.DisruptionImpact(impact)
 		body.Impact = &imp
 	}
 	if cmd.Flags().Changed("status") {
 		status, _ := cmd.Flags().GetString("status")
-		st := client.IncidentStatus(status)
+		st := client.DisruptionStatus(status)
 		body.Status = &st
 	}
 	if cmd.Flags().Changed("message") {
@@ -190,16 +190,16 @@ func runIncidentsUpdate(cmd *cobra.Command, args []string) error {
 		body.StatusPageId = &spID
 	}
 
-	resp, err := c.UpdateIncidentWithResponse(cmd.Context(), id, body)
+	resp, err := c.UpdateDisruptionWithResponse(cmd.Context(), id, body)
 	if err != nil {
 		return err
 	}
 
 	return handleAndPrintWithDefaults(cmd, resp.StatusCode(), resp.Body, "",
-		output.PrintOpts{ViewFunc: viewIncident})
+		output.PrintOpts{ViewFunc: viewDisruption})
 }
 
-func viewIncident(w io.Writer, data json.RawMessage) error {
+func viewDisruption(w io.Writer, data json.RawMessage) error {
 	var m map[string]any
 	if err := json.Unmarshal(data, &m); err != nil {
 		return err

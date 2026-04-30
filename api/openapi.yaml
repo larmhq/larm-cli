@@ -4,7 +4,7 @@ info:
   version: "1.0"
   description: |
     The Larm REST API lets you manage monitors, alert channels, status pages,
-    incidents, and webhook subscriptions programmatically.
+    disruptions, and webhook subscriptions programmatically.
 
     All endpoints require a Bearer API key. Create one in Settings > API Keys.
   contact:
@@ -29,8 +29,8 @@ tags:
     description: Manage public status pages
   - name: Components
     description: Manage status page components
-  - name: Incidents
-    description: Manage incidents and maintenance windows
+  - name: Disruptions
+    description: Manage disruptions and maintenance windows
   - name: Webhooks
     description: Manage webhook subscriptions
 
@@ -619,15 +619,15 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
 
-  # ── Incidents ─────────────────────────────────────────────────────────
-  /incidents:
+  # ── Disruptions ───────────────────────────────────────────────────────
+  /disruptions:
     get:
-      operationId: listIncidents
-      tags: [Incidents]
-      summary: List incidents
+      operationId: listDisruptions
+      tags: [Disruptions]
+      summary: List disruptions
       responses:
         "200":
-          description: List of incidents
+          description: List of disruptions
           content:
             application/json:
               schema:
@@ -637,23 +637,23 @@ paths:
                   data:
                     type: array
                     items:
-                      $ref: "#/components/schemas/IncidentSummary"
+                      $ref: "#/components/schemas/DisruptionSummary"
         "401":
           $ref: "#/components/responses/Unauthorized"
 
     post:
-      operationId: createIncident
-      tags: [Incidents]
-      summary: Create an incident
+      operationId: createDisruption
+      tags: [Disruptions]
+      summary: Create a disruption
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/IncidentInput"
+              $ref: "#/components/schemas/DisruptionInput"
       responses:
         "201":
-          description: Incident created
+          description: Disruption created
           content:
             application/json:
               schema:
@@ -661,22 +661,22 @@ paths:
                 required: [data]
                 properties:
                   data:
-                    $ref: "#/components/schemas/IncidentDetail"
+                    $ref: "#/components/schemas/DisruptionDetail"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "422":
           $ref: "#/components/responses/ValidationError"
 
-  /incidents/{id}:
+  /disruptions/{id}:
     get:
-      operationId: getIncident
-      tags: [Incidents]
-      summary: Get an incident
+      operationId: getDisruption
+      tags: [Disruptions]
+      summary: Get a disruption
       parameters:
         - $ref: "#/components/parameters/Id"
       responses:
         "200":
-          description: Incident details with updates and affected components
+          description: Disruption details with updates and affected components
           content:
             application/json:
               schema:
@@ -684,16 +684,16 @@ paths:
                 required: [data]
                 properties:
                   data:
-                    $ref: "#/components/schemas/IncidentDetail"
+                    $ref: "#/components/schemas/DisruptionDetail"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
 
     patch:
-      operationId: updateIncident
-      tags: [Incidents]
-      summary: Update an incident
+      operationId: updateDisruption
+      tags: [Disruptions]
+      summary: Update a disruption
       parameters:
         - $ref: "#/components/parameters/Id"
       requestBody:
@@ -701,10 +701,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/IncidentInput"
+              $ref: "#/components/schemas/DisruptionInput"
       responses:
         "200":
-          description: Incident updated
+          description: Disruption updated
           content:
             application/json:
               schema:
@@ -712,7 +712,7 @@ paths:
                 required: [data]
                 properties:
                   data:
-                    $ref: "#/components/schemas/IncidentDetail"
+                    $ref: "#/components/schemas/DisruptionDetail"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
@@ -949,15 +949,15 @@ components:
       type: string
       enum: [none, pending, active]
 
-    IncidentType:
+    DisruptionType:
       type: string
-      enum: [incident, maintenance]
+      enum: [disruption, maintenance]
 
-    IncidentStatus:
+    DisruptionStatus:
       type: string
       enum: [investigating, identified, monitoring, resolved, scheduled, in_progress, completed]
 
-    IncidentImpact:
+    DisruptionImpact:
       type: string
       enum: [minor, major, critical]
 
@@ -1324,7 +1324,7 @@ components:
               down_status:
                 type: string
 
-    IncidentSummary:
+    DisruptionSummary:
       type: object
       required: [id, title, type, status, impact, inserted_at, updated_at]
       properties:
@@ -1334,11 +1334,11 @@ components:
         title:
           type: string
         type:
-          $ref: "#/components/schemas/IncidentType"
+          $ref: "#/components/schemas/DisruptionType"
         status:
-          $ref: "#/components/schemas/IncidentStatus"
+          $ref: "#/components/schemas/DisruptionStatus"
         impact:
-          $ref: "#/components/schemas/IncidentImpact"
+          $ref: "#/components/schemas/DisruptionImpact"
         auto_created:
           type: boolean
         started_at:
@@ -1356,15 +1356,15 @@ components:
           type: string
           format: date-time
 
-    IncidentDetail:
+    DisruptionDetail:
       allOf:
-        - $ref: "#/components/schemas/IncidentSummary"
+        - $ref: "#/components/schemas/DisruptionSummary"
         - type: object
           properties:
             updates:
               type: array
               items:
-                $ref: "#/components/schemas/IncidentUpdate"
+                $ref: "#/components/schemas/DisruptionUpdate"
             affected_components:
               type: array
               items:
@@ -1378,7 +1378,7 @@ components:
                   status:
                     type: string
 
-    IncidentUpdate:
+    DisruptionUpdate:
       type: object
       properties:
         id:
@@ -1400,23 +1400,23 @@ components:
           description: Display name of the user who posted the update
           nullable: true
 
-    IncidentInput:
+    DisruptionInput:
       type: object
       properties:
         title:
           type: string
         type:
-          $ref: "#/components/schemas/IncidentType"
+          $ref: "#/components/schemas/DisruptionType"
         status:
-          $ref: "#/components/schemas/IncidentStatus"
+          $ref: "#/components/schemas/DisruptionStatus"
         impact:
-          $ref: "#/components/schemas/IncidentImpact"
+          $ref: "#/components/schemas/DisruptionImpact"
         started_at:
           type: string
           format: date-time
         message:
           type: string
-          description: Creates an incident update with this body
+          description: Creates a disruption update with this body
         status_page_id:
           type: string
           format: uuid
