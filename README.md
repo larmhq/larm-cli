@@ -2,7 +2,7 @@
 
 The official CLI for [Larm](https://larm.dev) -- uptime monitoring for engineering teams.
 
-Manage monitors, alerts, status pages, incidents, and webhooks from your terminal.
+Manage monitors, alerts, status pages, disruptions, and webhooks from your terminal.
 
 ## Install
 
@@ -92,13 +92,13 @@ larm components list --status-page-id <id>
 larm components show <component-id> --status-page-id <id>
 ```
 
-### Incidents
+### Disruptions
 
 ```
-larm incidents list
-larm incidents show <id>
-larm incidents create --title "API outage" --impact critical --message "Investigating"
-larm incidents update <id> --status resolved
+larm disruptions list
+larm disruptions show <id>
+larm disruptions create --title "API outage" --impact critical --message "Investigating"
+larm disruptions update <id> --status resolved
 ```
 
 ### Webhooks

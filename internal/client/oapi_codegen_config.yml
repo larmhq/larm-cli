@@ -10,5 +10,5 @@ output-options:
     - "Alert Channels"
     - "Status Pages"
     - "Components"
-    - "Incidents"
+    - "Disruptions"
     - "Webhooks"

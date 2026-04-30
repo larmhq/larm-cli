@@ -33,7 +33,7 @@ larm-cli/
     describe.go                    # JSON schema for LLM agent discovery
     monitors.go                    # monitors list/show/create/update/delete/state/uptime/response-times/cert + view functions
     alerts.go                      # alerts list/show/create/update/delete + viewAlertChannel
-    incidents.go                   # incidents list/show/create/update + viewIncident (with timeline)
+    disruptions.go                 # disruptions list/show/create/update + viewDisruption (with timeline)
     status_pages.go                # status-pages list/show/create/update/delete + viewStatusPage
     components.go                  # components list/show/create/update/delete (--status-page-id) + viewComponent
     webhooks.go                    # webhooks list/show/create/update/delete + viewWebhook

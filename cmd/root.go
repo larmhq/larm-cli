@@ -20,7 +20,7 @@ var (
 var rootCmd = &cobra.Command{
 	Use:           "larm",
 	Short:         "Larm CLI — uptime monitoring from the command line",
-	Long:          "Manage monitors, alerts, status pages, incidents, and webhooks via the Larm API.",
+	Long:          "Manage monitors, alerts, status pages, disruptions, and webhooks via the Larm API.",
 	SilenceUsage:  true,
 	SilenceErrors: true,
 }
