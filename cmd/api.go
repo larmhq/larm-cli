@@ -14,7 +14,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/larmhq/larm-cli/internal/api"
+	"github.com/larmhq/larm-go/client"
+
 	"github.com/larmhq/larm-cli/internal/output"
 )
 
@@ -110,7 +111,7 @@ func runAPI(cmd *cobra.Command, args []string) error {
 
 	apiClient := &http.Client{
 		Timeout:   30 * time.Second,
-		Transport: &api.RetryTransport{},
+		Transport: &client.RetryTransport{MaxRetries: 3},
 	}
 	resp, err := apiClient.Do(req)
 	if err != nil {
