@@ -2,20 +2,18 @@ package cmd
 
 import (
 	"bufio"
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/spf13/cobra"
 
-	"github.com/larmhq/larm-cli/internal/api"
+	"github.com/larmhq/larm-go/client"
+
 	"github.com/larmhq/larm-cli/internal/auth"
-	"github.com/larmhq/larm-cli/internal/client"
 	"github.com/larmhq/larm-cli/internal/output"
 )
 
@@ -29,8 +27,9 @@ func resolveAuth(cmd *cobra.Command) (string, error) {
 	return auth.Resolve(flagKey, apiURL)
 }
 
-// newTypedClient creates a typed oapi-codegen client from the command flags.
-// If --dry-run is set, the client prints the request and returns ErrDryRun.
+// newTypedClient creates a typed Larm API client from the command flags.
+// If --dry-run is set, the underlying transport prints the request and
+// returns ErrDryRun, which propagates back through the typed methods.
 func newTypedClient(cmd *cobra.Command) (*client.ClientWithResponses, error) {
 	key, err := resolveAuth(cmd)
 	if err != nil {
@@ -40,28 +39,18 @@ func newTypedClient(cmd *cobra.Command) (*client.ClientWithResponses, error) {
 	baseURL, _ := cmd.Flags().GetString("api-url")
 	dryRun, _ := cmd.Flags().GetBool("dry-run")
 
-	var httpClient *http.Client
+	opts := []client.Option{
+		client.WithToken(key),
+		client.WithUserAgent("larm-cli/" + version),
+	}
 	if dryRun {
-		httpClient = &http.Client{
-			Timeout:   30 * time.Second,
-			Transport: &dryRunTransport{},
-		}
-	} else {
-		httpClient = &http.Client{
-			Timeout:   30 * time.Second,
-			Transport: &api.RetryTransport{},
-		}
+		opts = append(opts,
+			client.WithBaseTransport(&dryRunTransport{}),
+			client.WithRetries(0),
+		)
 	}
 
-	return client.NewClientWithResponses(
-		baseURL+"/api/v1",
-		client.WithHTTPClient(httpClient),
-		client.WithRequestEditorFn(func(_ context.Context, req *http.Request) error {
-			req.Header.Set("Authorization", "Bearer "+key)
-			req.Header.Set("User-Agent", "larm-cli/"+version)
-			return nil
-		}),
-	)
+	return client.New(baseURL+"/api/v1", opts...)
 }
 
 type dryRunTransport struct{}

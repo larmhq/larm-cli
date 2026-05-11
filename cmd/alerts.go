@@ -7,7 +7,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/larmhq/larm-cli/internal/client"
+	"github.com/larmhq/larm-go/client"
+
 	"github.com/larmhq/larm-cli/internal/output"
 )
 

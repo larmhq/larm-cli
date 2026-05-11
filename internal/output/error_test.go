@@ -31,9 +31,9 @@ func TestParseAPIErrorUnknownBody(t *testing.T) {
 }
 
 func TestExitCodeFor(t *testing.T) {
-	apiErr := &APIError{ExitCode: ExitCodeAPIError}
-	if ExitCodeFor(apiErr) != ExitCodeAPIError {
-		t.Errorf("expected exit code %d, got: %d", ExitCodeAPIError, ExitCodeFor(apiErr))
+	cliErr := &CLIError{ExitCode: ExitCodeAPIError}
+	if ExitCodeFor(cliErr) != ExitCodeAPIError {
+		t.Errorf("expected exit code %d, got: %d", ExitCodeAPIError, ExitCodeFor(cliErr))
 	}
 
 	plainErr := fmt.Errorf("something")
@@ -44,7 +44,7 @@ func TestExitCodeFor(t *testing.T) {
 
 func TestPrintErrorJSON(t *testing.T) {
 	var buf bytes.Buffer
-	err := &APIError{Type: "not_found", Message: "gone"}
+	err := ParseAPIError(404, []byte(`{"error":{"type":"not_found","message":"gone"}}`))
 
 	PrintError(&buf, err, true)
 
@@ -55,7 +55,7 @@ func TestPrintErrorJSON(t *testing.T) {
 
 func TestPrintErrorPlain(t *testing.T) {
 	var buf bytes.Buffer
-	err := &APIError{Type: "not_found", Message: "gone"}
+	err := ParseAPIError(404, []byte(`{"error":{"type":"not_found","message":"gone"}}`))
 
 	PrintError(&buf, err, false)
 

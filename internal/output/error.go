@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+
+	"github.com/larmhq/larm-go/client"
 )
 
 const (
@@ -13,54 +15,37 @@ const (
 	ExitCodeNetworkError = 3
 )
 
-// APIError represents a structured error from the Larm API.
-type APIError struct {
-	StatusCode int    `json:"-"`
+// CLIError wraps a Larm SDK API error with CLI-specific exit code and
+// human-readable suggestion. The embedded *client.APIError contributes
+// StatusCode, Type, and Message; the CLI adds ExitCode and Suggestion.
+type CLIError struct {
+	*client.APIError
 	ExitCode   int    `json:"-"`
-	Type       string `json:"error"`
-	Message    string `json:"message"`
 	Suggestion string `json:"suggestion,omitempty"`
 }
 
-func (e *APIError) Error() string {
+func (e *CLIError) Error() string {
 	if e.Suggestion != "" {
-		return fmt.Sprintf("%s: %s\n%s", e.Type, e.Message, e.Suggestion)
+		return fmt.Sprintf("%s\n%s", e.APIError.Error(), e.Suggestion)
 	}
-	return fmt.Sprintf("%s: %s", e.Type, e.Message)
+	return e.APIError.Error()
 }
 
-// ParseAPIError attempts to parse an API error response body.
-func ParseAPIError(statusCode int, body []byte) *APIError {
-	var envelope struct {
-		Error struct {
-			Type    string `json:"type"`
-			Message string `json:"message"`
-		} `json:"error"`
-	}
-
-	apiErr := &APIError{
-		StatusCode: statusCode,
+// ParseAPIError parses an API error response body and wraps it with CLI
+// concerns (exit code, suggestion).
+func ParseAPIError(statusCode int, body []byte) *CLIError {
+	return &CLIError{
+		APIError:   client.ParseAPIError(statusCode, body),
 		ExitCode:   ExitCodeAPIError,
+		Suggestion: suggestionForStatus(statusCode),
 	}
-
-	if err := json.Unmarshal(body, &envelope); err == nil && envelope.Error.Type != "" {
-		apiErr.Type = envelope.Error.Type
-		apiErr.Message = envelope.Error.Message
-	} else {
-		apiErr.Type = fmt.Sprintf("http_%d", statusCode)
-		apiErr.Message = string(body)
-	}
-
-	apiErr.Suggestion = suggestionForStatus(statusCode)
-	return apiErr
 }
 
 // NewUserError creates an error for bad user input (exit code 1).
-func NewUserError(message string) *APIError {
-	return &APIError{
+func NewUserError(message string) *CLIError {
+	return &CLIError{
+		APIError: &client.APIError{Type: "user_error", Message: message},
 		ExitCode: ExitCodeUserError,
-		Type:     "user_error",
-		Message:  message,
 	}
 }
 
@@ -72,12 +57,11 @@ func HandleResponse(statusCode int, body []byte) error {
 	return ParseAPIError(statusCode, body)
 }
 
-// PrintError outputs an error to stderr. In JSON mode, outputs structured JSON.
+// PrintError outputs an error to the writer. In JSON mode, outputs structured JSON.
 func PrintError(w io.Writer, err error, jsonMode bool) {
-	var apiErr *APIError
-	if errors.As(err, &apiErr) && jsonMode {
-		enc := json.NewEncoder(w)
-		_ = enc.Encode(apiErr)
+	var cliErr *CLIError
+	if errors.As(err, &cliErr) && jsonMode {
+		_ = json.NewEncoder(w).Encode(cliErr)
 		return
 	}
 	fmt.Fprintln(w, err)
@@ -85,9 +69,9 @@ func PrintError(w io.Writer, err error, jsonMode bool) {
 
 // ExitCodeFor returns the appropriate exit code for an error.
 func ExitCodeFor(err error) int {
-	var apiErr *APIError
-	if errors.As(err, &apiErr) {
-		return apiErr.ExitCode
+	var cliErr *CLIError
+	if errors.As(err, &cliErr) {
+		return cliErr.ExitCode
 	}
 	return ExitCodeUserError
 }
