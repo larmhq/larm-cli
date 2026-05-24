@@ -5,17 +5,13 @@ go 1.26.1
 require (
 	github.com/google/uuid v1.6.0
 	github.com/itchyny/gojq v0.12.18
-	github.com/larmhq/larm-go v0.1.0
+	github.com/larmhq/larm-go v0.2.0
 	github.com/mattn/go-isatty v0.0.20
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/pflag v1.0.10
 	github.com/spf13/viper v1.21.0
 	golang.org/x/term v0.41.0
 )
-
-// Local development against in-progress larm-go changes.
-// Remove and bump the v0.1.0 above once larm-go releases the structure endpoint.
-replace github.com/larmhq/larm-go => ../larm-go
 
 require (
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
