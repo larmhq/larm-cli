@@ -17,12 +17,6 @@ var componentsCmd = &cobra.Command{
 	Short: "Manage status page components",
 }
 
-var componentsListCmd = &cobra.Command{
-	Use:   "list",
-	Short: "List components for a status page",
-	RunE:  runComponentsList,
-}
-
 var componentsShowCmd = &cobra.Command{
 	Use:   "show <id>",
 	Short: "Show a component",
@@ -52,7 +46,7 @@ var componentsDeleteCmd = &cobra.Command{
 
 func init() {
 	// All component commands require --status-page-id
-	for _, cmd := range []*cobra.Command{componentsListCmd, componentsShowCmd, componentsCreateCmd, componentsUpdateCmd, componentsDeleteCmd} {
+	for _, cmd := range []*cobra.Command{componentsShowCmd, componentsCreateCmd, componentsUpdateCmd, componentsDeleteCmd} {
 		cmd.Flags().String("status-page-id", "", "Status page ID (required)")
 		_ = cmd.MarkFlagRequired("status-page-id")
 	}
@@ -60,13 +54,14 @@ func init() {
 	componentsCreateCmd.Flags().String("name", "", "Component name")
 	componentsCreateCmd.Flags().String("description", "", "Component description")
 	componentsCreateCmd.Flags().Int("position", 0, "Display position")
+	componentsCreateCmd.Flags().String("group", "", "Component group ID (puts the component inside this group)")
 	_ = componentsCreateCmd.MarkFlagRequired("name")
 
 	componentsUpdateCmd.Flags().String("name", "", "New component name")
 	componentsUpdateCmd.Flags().String("description", "", "New description")
 	componentsUpdateCmd.Flags().Int("position", 0, "New position")
+	componentsUpdateCmd.Flags().String("group", "", "Component group ID (use empty string to move to top level)")
 
-	componentsCmd.AddCommand(componentsListCmd)
 	componentsCmd.AddCommand(componentsShowCmd)
 	componentsCmd.AddCommand(componentsCreateCmd)
 	componentsCmd.AddCommand(componentsUpdateCmd)
@@ -77,26 +72,6 @@ func init() {
 func getStatusPageID(cmd *cobra.Command) (client.StatusPageId, error) {
 	raw, _ := cmd.Flags().GetString("status-page-id")
 	return parseUUID(raw)
-}
-
-func runComponentsList(cmd *cobra.Command, _ []string) error {
-	c, err := newTypedClient(cmd)
-	if err != nil {
-		return err
-	}
-
-	spID, err := getStatusPageID(cmd)
-	if err != nil {
-		return err
-	}
-
-	resp, err := c.ListComponentsWithResponse(cmd.Context(), spID)
-	if err != nil {
-		return err
-	}
-
-	return handleAndPrintWithDefaults(cmd, resp.StatusCode(), resp.Body,
-		"id,name,position,description")
 }
 
 func runComponentsShow(cmd *cobra.Command, args []string) error {
@@ -148,6 +123,14 @@ func runComponentsCreate(cmd *cobra.Command, _ []string) error {
 		pos, _ := cmd.Flags().GetInt("position")
 		body.Position = &pos
 	}
+	if cmd.Flags().Changed("group") {
+		raw, _ := cmd.Flags().GetString("group")
+		groupID, err := parseUUID(raw)
+		if err != nil {
+			return fmt.Errorf("invalid --group: %w", err)
+		}
+		body.ComponentGroupId = &groupID
+	}
 
 	resp, err := c.CreateComponentWithResponse(cmd.Context(), spID, body)
 	if err != nil {
@@ -187,6 +170,14 @@ func runComponentsUpdate(cmd *cobra.Command, args []string) error {
 	if cmd.Flags().Changed("position") {
 		pos, _ := cmd.Flags().GetInt("position")
 		body.Position = &pos
+	}
+	if cmd.Flags().Changed("group") {
+		raw, _ := cmd.Flags().GetString("group")
+		groupID, err := parseUUID(raw)
+		if err != nil {
+			return fmt.Errorf("invalid --group: %w", err)
+		}
+		body.ComponentGroupId = &groupID
 	}
 
 	resp, err := c.UpdateComponentWithResponse(cmd.Context(), spID, id, body)

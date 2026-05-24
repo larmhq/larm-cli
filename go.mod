@@ -13,6 +13,10 @@ require (
 	golang.org/x/term v0.41.0
 )
 
+// Local development against in-progress larm-go changes.
+// Remove and bump the v0.1.0 above once larm-go releases the structure endpoint.
+replace github.com/larmhq/larm-go => ../larm-go
+
 require (
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
