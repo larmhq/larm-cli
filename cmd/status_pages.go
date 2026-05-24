@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -207,7 +208,7 @@ func viewStatusPage(w io.Writer, data json.RawMessage) error {
 		field("theme", "theme"),
 		field("primary_color", "primary_color"),
 		field("description", "description"),
-		staticField("components", joinStrings(m["components"], "(none)")),
+		staticField("components", renderStatusPageTree(m["components"])),
 		field("custom_domain", "custom_domain"),
 		field("domain_status", "domain_status"),
 		field("inserted_at", "inserted_at"),
@@ -215,4 +216,46 @@ func viewStatusPage(w io.Writer, data json.RawMessage) error {
 	}
 
 	return writeView(w, m, rows)
+}
+
+// renderStatusPageTree formats the polymorphic components tree for the
+// `status-pages show` view. Groups are headers; their components are indented.
+// Ungrouped components sit at the top level alongside groups, in array order.
+func renderStatusPageTree(raw any) string {
+	entries, ok := raw.([]any)
+	if !ok || len(entries) == 0 {
+		return "(none)"
+	}
+
+	var sb strings.Builder
+	for _, e := range entries {
+		entry, ok := e.(map[string]any)
+		if !ok {
+			continue
+		}
+
+		switch entry["type"] {
+		case "group":
+			fmt.Fprintf(&sb, "\n  %s/", stringOrEmpty(entry["name"]))
+			children, _ := entry["components"].([]any)
+			for _, c := range children {
+				child, ok := c.(map[string]any)
+				if !ok {
+					continue
+				}
+				fmt.Fprintf(&sb, "\n    %s", stringOrEmpty(child["name"]))
+			}
+		case "component":
+			fmt.Fprintf(&sb, "\n  %s", stringOrEmpty(entry["name"]))
+		}
+	}
+
+	return sb.String()
+}
+
+func stringOrEmpty(v any) string {
+	if s, ok := v.(string); ok {
+		return s
+	}
+	return ""
 }
