@@ -1,7 +1,7 @@
 [tools]
-go = "1.26.1"
-"go:golang.org/x/tools/cmd/goimports" = "0.44.0"
-goreleaser = "2.15.4"
+go = "1.27.3"
+"go:golang.org/x/tools/cmd/goimports" = "0.52.0"
+goreleaser = "2.20.0"
 
 [tools."golangci-lint"]
-version = "2.11.1"
+version = "2.15.0"
